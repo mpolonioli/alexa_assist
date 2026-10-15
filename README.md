@@ -30,12 +30,37 @@ engine, no satellite features (on-device timers, media announcements).
 
 ## Before you start
 
-- Home Assistant reachable on **port 443** with a certificate from a CA Amazon trusts, and the domain in the
-  certificate's SANs. Anything behind Cloudflare or Nabu Casa qualifies; a self-signed certificate only works for
+- **The skill endpoint must be reachable from the internet** over HTTPS on port 443, with a certificate from a CA
+  Amazon trusts and the domain in the certificate's SANs. Amazon's cloud calls it; there is no local-only way.
+  See [Making the endpoint reachable](#making-the-endpoint-reachable). A self-signed certificate only works for
   console testing.
 - The Amazon account behind your Echo devices must be the one you log into the developer console with. A skill
   left in the Development stage works on those devices indefinitely and never needs certification.
 - Home Assistant 2026.10 or newer.
+
+## Making the endpoint reachable
+
+Alexa runs in Amazon's cloud and calls the skill's endpoint itself, so `/api/alexa_assist/alexa` needs a public
+HTTPS address. Common ways to get one:
+
+| Option | How | Notes |
+|---|---|---|
+| **Home Assistant Cloud** (Nabu Casa) | Turn on Remote UI and use `https://<id>.ui.nabu.casa/api/alexa_assist/alexa` | Easiest. Exposes the whole instance (behind Home Assistant's login), not only the skill path. |
+| **Cloudflare Tunnel** (`cloudflared` add-on) | Public hostname → tunnel → Home Assistant | Free and no router port to open. Bot protection may need a rule that skips the skill path. |
+| **Reverse proxy + port forward** (NGINX Proxy Manager, Caddy, Traefik with Let's Encrypt) | Router port 443 → proxy → Home Assistant | The classic self-hosted setup. |
+| **Tailscale Funnel** | Funnel publishes a public URL with a valid certificate | No router port to open. |
+
+**Only the skill path needs to be public.** If your tunnel or proxy lets you, forward only
+`/api/alexa_assist/alexa` and block everything else (a Cloudflare WAF rule, a proxy `location` block, an ingress
+path rule). The internet then sees just the signed, skill-ID-checked endpoint, and none of Home Assistant's login
+page, REST or WebSocket API. If you also use the same hostname for the companion app or remote access, keep
+those paths reachable too, or protect them separately (for example with Cloudflare Access).
+
+The endpoint has no Home Assistant authentication, because Alexa cannot send a token. Instead every request must
+carry a valid Amazon signature, be for your skill ID and be less than 150 seconds old; anything else is refused
+before it reaches the agent. It only accepts text for the one conversation agent you picked, with the same
+permissions as a voice satellite: limit what that agent can do through what you expose to Assist, because anyone
+who can talk to your Echo can ask it.
 
 ## 1. Install the integration
 
