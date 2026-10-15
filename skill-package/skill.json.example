@@ -1,0 +1,64 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "Home Helper",
+          "summary": "Talk to your Home Assistant conversation agent.",
+          "description": "Forwards what you say to a Home Assistant conversation agent and reads the answer.",
+          "examplePhrases": [
+            "Alexa, open Home Helper",
+            "Alexa, ask Home Helper what the weather is like",
+            "Alexa, ask Home Helper to turn on the kitchen light"
+          ],
+          "keywords": [
+            "home",
+            "assistant"
+          ]
+        },
+        "it-IT": {
+          "name": "Assistente di casa",
+          "summary": "Parla con l'agente di conversazione di Home Assistant.",
+          "description": "Inoltra quello che dici a un agente di conversazione di Home Assistant e legge la risposta.",
+          "examplePhrases": [
+            "Alexa, apri Assistente di casa",
+            "Alexa, chiedi ad Assistente di casa che tempo fa",
+            "Alexa, chiedi ad Assistente di casa di accendere la luce della cucina"
+          ],
+          "keywords": [
+            "home",
+            "assistant",
+            "casa"
+          ]
+        }
+      },
+      "isAvailableWorldwide": false,
+      "distributionCountries": [
+        "US",
+        "IT"
+      ],
+      "category": "SMART_HOME",
+      "testingInstructions": "Private skill, never submitted for certification."
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "https://REPLACE-WITH-YOUR-EXTERNAL-URL/api/alexa_assist/alexa",
+          "sslCertificateType": "Wildcard"
+        }
+      }
+    },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "containsAds": false,
+      "isExportCompliant": true,
+      "isChildDirected": false,
+      "locales": {
+        "en-US": {},
+        "it-IT": {}
+      }
+    }
+  }
+}
