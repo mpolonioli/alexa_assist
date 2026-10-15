@@ -15,6 +15,7 @@ than filled, so the first thing the Echo says is the answer.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from http import HTTPStatus
 from typing import Any
@@ -289,13 +290,24 @@ def _conversation_id(options: dict[str, Any], message: dict[str, Any]) -> str | 
     follow-up knows what it refers to. Home Assistant drops a session after five
     idle minutes, so the thread also resets itself without anything to clean up.
     Keyed on the Alexa session instead, every invocation starts empty.
+
+    Alexa's ids run past 200 characters and agents pass the conversation id on
+    to their provider (OpenAI caps its safety_identifier at 128), so the id is
+    hashed down to a short one that never leaves Amazon's id behind.
     """
     session_id = message.get("session", {}).get("sessionId")
     if not options.get(CONF_REMEMBER, RECOMMENDED_REMEMBER):
-        return session_id
+        return _short_id(session_id)
     device_id = message.get("context", {}).get("System", {}).get("device", {}).get("deviceId")
     # Simulated requests carry no device, so they fall back to the session.
-    return device_id or session_id
+    return _short_id(device_id or session_id)
+
+
+def _short_id(alexa_id: str | None) -> str | None:
+    """Return a short, stable conversation id for an Alexa id."""
+    if not alexa_id:
+        return None
+    return f"alexa-{hashlib.sha256(alexa_id.encode()).hexdigest()[:32]}"
 
 
 @callback

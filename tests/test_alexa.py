@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.x509.oid import NameOID
 
+from custom_components.alexa_assist.alexa import _short_id
 from custom_components.alexa_assist.alexa_auth import (
     AlexaAuthError,
     _validate_cert_url,
@@ -42,7 +43,8 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .conftest import AGENT_ID, SKILL_ID
 
-DEVICE_ID = "amzn1.ask.device.AMATEST"
+# Real Alexa device ids are about this long, far past what OpenAI accepts.
+DEVICE_ID = "amzn1.ask.device." + "A" * 208
 SESSION_ID = "amzn1.echo-api.session.abc-123"
 
 IT = PHRASES["it"]
@@ -306,7 +308,9 @@ async def test_questions_from_one_echo_share_a_conversation(
         await client.post(ENDPOINT, json=first)
         await client.post(ENDPOINT, json=second)
 
-    assert [call["conversation_id"] for call in seen] == [DEVICE_ID, DEVICE_ID]
+    assert [call["conversation_id"] for call in seen] == [_short_id(DEVICE_ID)] * 2
+    assert len(seen[0]["conversation_id"]) <= 64
+    assert DEVICE_ID not in seen[0]["conversation_id"]
     assert [call["language"] for call in seen] == ["it-IT", "it-IT"]
     assert seen[0]["agent_id"] == AGENT_ID
 
@@ -331,7 +335,7 @@ async def test_forgetting_falls_back_to_the_alexa_session(
     with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_capture):
         await client.post(ENDPOINT, json=_query("che ore sono"))
 
-    assert seen[0]["conversation_id"] == SESSION_ID
+    assert seen[0]["conversation_id"] == _short_id(SESSION_ID)
 
 
 async def test_a_request_without_a_device_uses_the_session(
@@ -352,7 +356,7 @@ async def test_a_request_without_a_device_uses_the_session(
     with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_capture):
         await client.post(ENDPOINT, json=body)
 
-    assert seen[0]["conversation_id"] == SESSION_ID
+    assert seen[0]["conversation_id"] == _short_id(SESSION_ID)
 
 
 async def test_stop_intent_says_goodbye(
