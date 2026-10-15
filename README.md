@@ -65,7 +65,7 @@ who can talk to your Echo can ask it.
 ## 1. Install the integration
 
 1. HACS → Integrations → ⋮ → Custom repositories → add this repository (category *Integration*), install
-   **Alexa Assist**, restart Home Assistant. Or copy `custom_components/alexa_assist` into
+   **Alexa Assist**, restart Home Assistant. Or download `llm_toolbox.zip` from the latest release and unzip it into
    `config/custom_components/`.
 2. Settings → Devices & services → Add integration → **Alexa Assist**. You need the skill ID from step 2, so keep
    this tab open.
