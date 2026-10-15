@@ -10,8 +10,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
-    EntitySelector,
-    EntitySelectorConfig,
+    AssistPipelineSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -24,15 +23,15 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    CONF_AGENT,
     CONF_ANNOUNCE_LATE,
+    CONF_ASSISTANT,
     CONF_DEADLINE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_SKILL_ID,
     CONF_VERIFY_SIGNATURE,
     DEADLINE_RANGE,
-    DEFAULT_AGENT,
+    DEFAULT_ASSISTANT,
     DOMAIN,
     ENDPOINT,
     LAUNCH_SOUNDS,
@@ -45,7 +44,7 @@ from .const import (
 )
 
 DEFAULTS: dict[str, Any] = {
-    CONF_AGENT: DEFAULT_AGENT,
+    CONF_ASSISTANT: DEFAULT_ASSISTANT,
     CONF_LAUNCH_SOUND: RECOMMENDED_LAUNCH_SOUND,
     CONF_DEADLINE: RECOMMENDED_DEADLINE,
     CONF_REMEMBER: RECOMMENDED_REMEMBER,
@@ -56,7 +55,7 @@ DEFAULTS: dict[str, Any] = {
 SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SKILL_ID): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-        vol.Required(CONF_AGENT): EntitySelector(EntitySelectorConfig(domain="conversation")),
+        vol.Required(CONF_ASSISTANT): AssistPipelineSelector(),
         vol.Optional(CONF_LAUNCH_SOUND): SelectSelector(
             SelectSelectorConfig(
                 options=LAUNCH_SOUNDS,
@@ -100,11 +99,11 @@ class AlexaAssistConfigFlow(ConfigFlow, domain=DOMAIN):
     """Set up the skill endpoint."""
 
     VERSION = 1
-    MINOR_VERSION = 1
+    MINOR_VERSION = 2
 
     @override
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Ask for the skill id and the agent that answers."""
+        """Ask for the skill id and the assistant that answers."""
         errors: dict[str, str] = {}
         if user_input is not None:
             data, errors = _validate(user_input)

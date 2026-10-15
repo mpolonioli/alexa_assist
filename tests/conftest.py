@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import socket
 import sys
+import types
 
 import pytest
 
@@ -24,13 +25,24 @@ if sys.platform == "win32":
 
     socket.socketpair = _socketpair
 
+    # assist_pipeline imports two native audio libraries at load time. They only
+    # clean up microphone audio, which a text run never touches, and they have no
+    # Windows wheels, so stand in for them when they cannot be built. CI installs
+    # the real ones.
+    for _module, _attr in (("pymicro_vad", "MicroVad"), ("pyspeex_noise", "AudioProcessor")):
+        try:
+            __import__(_module)
+        except ImportError:
+            sys.modules[_module] = types.SimpleNamespace(**{_attr: object})  # type: ignore[assignment]
+
 from custom_components.alexa_assist.const import (
-    CONF_AGENT,
     CONF_ANNOUNCE_LATE,
+    CONF_ASSISTANT,
     CONF_DEADLINE,
     CONF_REMEMBER,
     CONF_SKILL_ID,
     CONF_VERIFY_SIGNATURE,
+    DEFAULT_ASSISTANT,
     DOMAIN,
     TITLE,
 )
@@ -61,10 +73,11 @@ def mock_config_entry(hass: HomeAssistant) -> MockConfigEntry:
     entry = MockConfigEntry(
         domain=DOMAIN,
         title=TITLE,
+        minor_version=2,
         data={},
         options={
             CONF_SKILL_ID: SKILL_ID,
-            CONF_AGENT: AGENT_ID,
+            CONF_ASSISTANT: DEFAULT_ASSISTANT,
             CONF_DEADLINE: 0.3,
             CONF_REMEMBER: True,
             CONF_ANNOUNCE_LATE: True,

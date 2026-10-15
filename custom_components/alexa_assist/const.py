@@ -9,8 +9,10 @@ TITLE = "Alexa Assist"
 
 # Echo devices cannot be Assist satellites (no raw microphone access), so the
 # only way in is a custom skill: Alexa does wake word, speech recognition and
-# text to speech, and Home Assistant only runs the conversation agent.
+# text to speech, and Home Assistant runs the assistant's intent stage.
 CONF_SKILL_ID = "skill_id"
+CONF_ASSISTANT = "assistant"
+# Replaced by CONF_ASSISTANT in 1.2; only read to migrate older entries.
 CONF_AGENT = "agent"
 CONF_VERIFY_SIGNATURE = "verify_signature"
 CONF_DEADLINE = "deadline"
@@ -20,8 +22,8 @@ CONF_REMEMBER = "remember"
 
 ENDPOINT = f"/api/{DOMAIN}/alexa"
 
-# Home Assistant's built-in agent; any other conversation agent can be picked.
-DEFAULT_AGENT = "conversation.home_assistant"
+# Whichever assistant is marked preferred in Settings > Voice assistants.
+DEFAULT_ASSISTANT = "preferred"
 
 # Alexa gives a skill about 8 seconds to return a full response, so the answer
 # has to be in the body of the first reply. The rest of the budget goes to TLS,
