@@ -1,7 +1,7 @@
 [project]
 name = "alexa-assist"
-version = "0.1.0"
-description = "Talk to any Home Assistant conversation agent from Echo devices through a self-hosted Alexa custom skill"
+version = "0.2.0"
+description = "Talk to any Home Assistant assistant from Echo devices through a self-hosted Alexa custom skill"
 requires-python = ">=3.14"
 
 [tool.pytest.ini_options]

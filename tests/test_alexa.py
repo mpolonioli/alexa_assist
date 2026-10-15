@@ -223,7 +223,7 @@ async def test_one_shot_question_answers_and_hangs_up(
     """A one-shot question ("Alexa, ask <skill> ...") answers once."""
     client = await hass_client_no_auth()
     with patch(
-        "custom_components.alexa_assist.alexa.conversation.async_converse",
+        "homeassistant.components.conversation.async_converse",
         new=_answer("Sono le tre."),
     ):
         response = await client.post(ENDPOINT, json=_query("che ore sono"))
@@ -244,7 +244,7 @@ async def test_an_answer_always_ends_the_session(
     """
     client = await hass_client_no_auth()
     with patch(
-        "custom_components.alexa_assist.alexa.conversation.async_converse",
+        "homeassistant.components.conversation.async_converse",
         new=_answer("Fatto."),
     ):
         response = await client.post(
@@ -304,14 +304,15 @@ async def test_questions_from_one_echo_share_a_conversation(
     second["session"]["sessionId"] = "amzn1.echo-api.session.a-different-one"
 
     client = await hass_client_no_auth()
-    with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_capture):
+    with patch("homeassistant.components.conversation.async_converse", new=_capture):
         await client.post(ENDPOINT, json=first)
         await client.post(ENDPOINT, json=second)
 
     assert [call["conversation_id"] for call in seen] == [_short_id(DEVICE_ID)] * 2
     assert len(seen[0]["conversation_id"]) <= 64
     assert DEVICE_ID not in seen[0]["conversation_id"]
-    assert [call["language"] for call in seen] == ["it-IT", "it-IT"]
+    # The assistant's language applies, as for any satellite, not the Echo's locale.
+    assert [call["language"] for call in seen] == [hass.config.language] * 2
     assert seen[0]["agent_id"] == AGENT_ID
 
 
@@ -332,7 +333,7 @@ async def test_forgetting_falls_back_to_the_alexa_session(
         return await answer(hass, *args, **kwargs)
 
     client = await hass_client_no_auth()
-    with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_capture):
+    with patch("homeassistant.components.conversation.async_converse", new=_capture):
         await client.post(ENDPOINT, json=_query("che ore sono"))
 
     assert seen[0]["conversation_id"] == _short_id(SESSION_ID)
@@ -353,7 +354,7 @@ async def test_a_request_without_a_device_uses_the_session(
         return await answer(hass, *args, **kwargs)
 
     client = await hass_client_no_auth()
-    with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_capture):
+    with patch("homeassistant.components.conversation.async_converse", new=_capture):
         await client.post(ENDPOINT, json=body)
 
     assert seen[0]["conversation_id"] == _short_id(SESSION_ID)
@@ -385,7 +386,7 @@ async def test_unknown_intent_is_not_sent_to_the_agent(
 ) -> None:
     """An intent without usable text never reaches the agent."""
     client = await hass_client_no_auth()
-    with patch("custom_components.alexa_assist.alexa.conversation.async_converse") as converse:
+    with patch("homeassistant.components.conversation.async_converse") as converse:
         response = await client.post(
             ENDPOINT,
             json=_request(
@@ -461,7 +462,7 @@ async def test_an_unmapped_echo_is_named_in_the_log_once(
     client = await hass_client_no_auth()
     with caplog.at_level(logging.WARNING, logger="custom_components.alexa_assist"):
         with patch(
-            "custom_components.alexa_assist.alexa.conversation.async_converse",
+            "homeassistant.components.conversation.async_converse",
             new=_answer("Fatto."),
         ):
             await client.post(ENDPOINT, json=_query("accendi la luce"))
@@ -488,7 +489,7 @@ async def test_a_mapped_echo_is_not_mentioned(
     client = await hass_client_no_auth()
     with caplog.at_level(logging.WARNING, logger="custom_components.alexa_assist"):
         with patch(
-            "custom_components.alexa_assist.alexa.conversation.async_converse",
+            "homeassistant.components.conversation.async_converse",
             new=_answer("Fatto."),
         ):
             await client.post(ENDPOINT, json=_query("accendi la luce"))
@@ -511,7 +512,7 @@ async def test_a_late_answer_is_announced_on_the_echo_that_asked(
 
     client = await hass_client_no_auth()
     with patch(
-        "custom_components.alexa_assist.alexa.conversation.async_converse",
+        "homeassistant.components.conversation.async_converse",
         new=_answer("Domani sereno.", delay=0.6),
     ):
         response = await client.post(ENDPOINT, json=_query("che tempo fa domani"))
@@ -530,7 +531,7 @@ async def test_a_late_answer_without_a_mapped_echo_says_so(
     """With nowhere to send it, the answer is dropped and the phrase differs."""
     client = await hass_client_no_auth()
     with patch(
-        "custom_components.alexa_assist.alexa.conversation.async_converse",
+        "homeassistant.components.conversation.async_converse",
         new=_answer("Troppo tardi.", delay=0.6),
     ):
         response = await client.post(ENDPOINT, json=_query("che tempo fa domani"))
@@ -549,7 +550,7 @@ async def test_an_agent_failure_is_spoken(
         raise HomeAssistantError("no model")
 
     client = await hass_client_no_auth()
-    with patch("custom_components.alexa_assist.alexa.conversation.async_converse", new=_boom):
+    with patch("homeassistant.components.conversation.async_converse", new=_boom):
         response = await client.post(ENDPOINT, json=_query("che ore sono"))
 
     payload = await response.json()

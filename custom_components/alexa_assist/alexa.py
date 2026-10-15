@@ -1,9 +1,9 @@
-"""Alexa custom skill endpoint, so Echo devices can talk to the agent.
+"""Alexa custom skill endpoint, so Echo devices can talk to an assistant.
 
 An Echo cannot be an Assist satellite: skills get no access to the microphone.
 What a custom skill does give us is the recognised text, which is all the
-conversation agent needs. Alexa keeps the wake word, the speech recognition and
-the voice; Home Assistant keeps the house.
+assistant's intent stage needs. Alexa keeps the wake word, the speech
+recognition and the voice; Home Assistant keeps the house.
 
 The catch is time. Alexa allows a skill about 8 seconds to return a full
 response, so a slow turn cannot simply be waited out. Answers that arrive in
@@ -23,10 +23,20 @@ from xml.sax.saxutils import escape
 
 from aiohttp import web
 
-from homeassistant.components import conversation
+from homeassistant.components.assist_pipeline import (
+    OPTION_PREFERRED,
+    PipelineEvent,
+    PipelineEventType,
+    PipelineInput,
+    PipelineNotFound,
+    PipelineRun,
+    PipelineStage,
+    async_get_pipeline,
+)
 from homeassistant.components.http import KEY_HASS, HomeAssistantView
 from homeassistant.core import Context, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import chat_session
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import label_registry as lr
@@ -34,8 +44,8 @@ from homeassistant.util.hass_dict import HassKey
 
 from .alexa_auth import AlexaAuthError, async_verify_request, verify_timestamp
 from .const import (
-    CONF_AGENT,
     CONF_ANNOUNCE_LATE,
+    CONF_ASSISTANT,
     CONF_DEADLINE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
@@ -229,7 +239,7 @@ async def _async_handle(
 
     if not query:
         # An unmapped intent or an empty slot both mean Alexa understood the
-        # words but we have nothing to send to the agent.
+        # words but we have nothing to send to the assistant.
         LOGGER.debug("Alexa sent intent %s with no usable text", name)
         return _response(_phrase(locale, "not_understood"))
 
@@ -244,7 +254,7 @@ async def _async_answer(
     query: str,
     locale: str | None,
 ) -> str:
-    """Run the agent and return what Alexa should say.
+    """Run the assistant and return what Alexa should say.
 
     The turn is never cancelled: an answer that misses the deadline is still
     worth having, it just has to arrive on the Echo instead of in the response.
@@ -252,14 +262,7 @@ async def _async_answer(
     deadline = float(options.get(CONF_DEADLINE, RECOMMENDED_DEADLINE))
 
     task = hass.async_create_task(
-        conversation.async_converse(
-            hass,
-            text=query,
-            conversation_id=_conversation_id(options, message),
-            context=Context(),
-            language=locale,
-            agent_id=options.get(CONF_AGENT),
-        ),
+        _async_run_assistant(hass, options, message, query),
         name=f"{DOMAIN}_alexa_converse",
     )
 
@@ -268,15 +271,64 @@ async def _async_answer(
         return _async_hand_over(hass, options, message, task, locale)
 
     try:
-        result = task.result()
+        speech = task.result()
     except HomeAssistantError as err:
-        LOGGER.error("The agent failed on a request from Alexa: %s", err)
+        LOGGER.error("The assistant failed on a request from Alexa: %s", err)
         return _phrase(locale, "error")
     except Exception:
         LOGGER.exception("Unexpected error on a request from Alexa")
         return _phrase(locale, "error")
 
-    return _speech(result) or _phrase(locale, "empty")
+    return speech or _phrase(locale, "empty")
+
+
+async def _async_run_assistant(
+    hass: HomeAssistant,
+    options: dict[str, Any],
+    message: dict[str, Any],
+    query: str,
+) -> str:
+    """Run the text through the assistant's intent stage and return its speech.
+
+    Going through the assistant rather than straight to its agent is what makes
+    its own settings apply ("Prefer handling commands locally" above all) and
+    what puts the run in the assistant's debug view. Alexa already did the
+    speech, so the run starts and ends at the intent stage.
+    """
+    assistant = options.get(CONF_ASSISTANT)
+    try:
+        pipeline = async_get_pipeline(
+            hass, None if assistant in (None, "", OPTION_PREFERRED) else assistant
+        )
+    except PipelineNotFound as err:
+        raise HomeAssistantError(
+            f"The assistant Alexa answers with is gone, pick another one: {err}"
+        ) from err
+
+    events: list[PipelineEvent] = []
+    with chat_session.async_get_chat_session(hass, _conversation_id(options, message)) as session:
+        await PipelineInput(
+            run=PipelineRun(
+                hass,
+                context=Context(),
+                pipeline=pipeline,
+                start_stage=PipelineStage.INTENT,
+                end_stage=PipelineStage.INTENT,
+                event_callback=events.append,
+            ),
+            session=session,
+            intent_input=query,
+            device_id=_async_echo_device(hass, message),
+        ).execute(validate=True)
+
+    for event in events:
+        data = event.data or {}
+        if event.type is PipelineEventType.ERROR:
+            raise HomeAssistantError(data.get("message") or data.get("code"))
+        if event.type is PipelineEventType.INTENT_END:
+            response = data.get("intent_output", {}).get("response", {})
+            return str(response.get("speech", {}).get("plain", {}).get("speech") or "")
+    return ""
 
 
 @callback
@@ -311,17 +363,11 @@ def _short_id(alexa_id: str | None) -> str | None:
 
 
 @callback
-def _speech(result: conversation.ConversationResult) -> str:
-    """Return the spoken part of a conversation result."""
-    return str(result.response.speech.get("plain", {}).get("speech", "") or "")
-
-
-@callback
 def _async_hand_over(
     hass: HomeAssistant,
     options: dict[str, Any],
     message: dict[str, Any],
-    task: asyncio.Task[conversation.ConversationResult],
+    task: asyncio.Task[str],
     locale: str | None,
 ) -> str:
     """Arrange for a late answer to be spoken, and say so.
@@ -332,20 +378,20 @@ def _async_hand_over(
     if options.get(CONF_ANNOUNCE_LATE, RECOMMENDED_ANNOUNCE_LATE):
         target = _async_late_target(hass, message)
 
-    def _finished(finished: asyncio.Future[conversation.ConversationResult]) -> None:
+    def _finished(finished: asyncio.Future[str]) -> None:
         """Announce the answer, and keep the task's outcome from being lost."""
         try:
-            result = finished.result()
+            speech = finished.result()
         except asyncio.CancelledError:
             return
         except HomeAssistantError as err:
-            LOGGER.error("The agent failed on a late request from Alexa: %s", err)
+            LOGGER.error("The assistant failed on a late request from Alexa: %s", err)
             return
         except Exception:
             LOGGER.exception("Unexpected error on a late request from Alexa")
             return
 
-        if target is None or not (speech := _speech(result)):
+        if target is None or not speech:
             LOGGER.info("Dropped a late answer from Alexa: %s", speech if target else "no target")
             return
 
@@ -413,6 +459,23 @@ def _async_late_target(hass: HomeAssistant, message: dict[str, Any]) -> str | No
             device_id,
         )
     return target
+
+
+@callback
+def _async_echo_device(hass: HomeAssistant, message: dict[str, Any]) -> str | None:
+    """Return the Home Assistant device of the Echo that asked, if it is mapped.
+
+    Handing it to the assistant is what makes "turn off the light" mean the
+    light in the Echo's area, as it would for a voice satellite.
+    """
+    if not (alexa_id := _device_id(message)):
+        return None
+    if (label := lr.async_get(hass).async_get_label_by_name(alexa_id)) is None:
+        return None
+    # Only a label on a device counts: one on a notify entity redirects late
+    # answers (to a phone, say), which says nothing about where the Echo is.
+    devices = dr.async_entries_for_label(dr.async_get(hass), label.label_id)
+    return devices[0].id if devices else None
 
 
 @callback

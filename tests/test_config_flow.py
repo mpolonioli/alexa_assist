@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from custom_components.alexa_assist.const import (
-    CONF_AGENT,
     CONF_ANNOUNCE_LATE,
+    CONF_ASSISTANT,
     CONF_DEADLINE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_SKILL_ID,
     CONF_VERIFY_SIGNATURE,
-    DEFAULT_AGENT,
+    DEFAULT_ASSISTANT,
     DOMAIN,
     ENDPOINT,
     RECOMMENDED_LAUNCH_SOUND,
@@ -25,9 +25,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .conftest import SKILL_ID
 
+ASSISTANT_ID = "01JALEXAASSISTANTPIPELINE0"
+
 FORM: dict[str, Any] = {
     CONF_SKILL_ID: f"  {SKILL_ID} ",
-    CONF_AGENT: "conversation.openai",
+    CONF_ASSISTANT: ASSISTANT_ID,
     CONF_LAUNCH_SOUND: RECOMMENDED_LAUNCH_SOUND,
     CONF_DEADLINE: 6.5,
     CONF_REMEMBER: True,
@@ -45,20 +47,20 @@ def _suggested(result: Any, key: str) -> Any:
 
 
 async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
-    """Setup asks for the skill, defaults to the built-in agent, and stores the options."""
+    """Setup asks for the skill, defaults to the preferred assistant, and stores the options."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     assert result["type"] is FlowResultType.FORM
     assert result["description_placeholders"] == {"endpoint": ENDPOINT}
-    assert _suggested(result, CONF_AGENT) == DEFAULT_AGENT
+    assert _suggested(result, CONF_ASSISTANT) == DEFAULT_ASSISTANT
 
     result = await hass.config_entries.flow.async_configure(result["flow_id"], FORM)
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == TITLE
     assert result["data"] == {}
     assert result["options"][CONF_SKILL_ID] == SKILL_ID
-    assert result["options"][CONF_AGENT] == "conversation.openai"
+    assert result["options"][CONF_ASSISTANT] == ASSISTANT_ID
 
 
 async def test_user_flow_needs_a_skill_id(hass: HomeAssistant) -> None:
@@ -107,4 +109,4 @@ async def test_options_flow_changes_the_settings(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert init_integration.options[CONF_LAUNCH_SOUND] == ""
     assert init_integration.options[CONF_REMEMBER] is False
-    assert init_integration.options[CONF_AGENT] == "conversation.openai"
+    assert init_integration.options[CONF_ASSISTANT] == ASSISTANT_ID

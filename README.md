@@ -1,7 +1,7 @@
 # Alexa Assist
 
-Talk to **any Home Assistant conversation agent** from your Echo devices: Home Assistant's own Assist, or an LLM
-agent such as OpenAI, Anthropic, Google or Ollama.
+Talk to **any Home Assistant assistant** from your Echo devices, whichever conversation agent it uses: Home
+Assistant's own, or an LLM agent such as OpenAI, Anthropic, Google or Ollama.
 
 ```
 "Alexa, ask Home Helper to turn on the kitchen light"   one question, one answer
@@ -9,24 +9,28 @@ agent such as OpenAI, Anthropic, Google or Ollama.
 ```
 
 An Echo cannot be an Assist satellite: skills get no access to the microphone. What an Alexa **custom skill**
-does give us is the recognised text, which is all a conversation agent needs. Alexa keeps the wake word, the
-speech recognition and the voice; Home Assistant runs the agent, with the same tools and the same traces in the
-Assist debug view as a voice satellite.
+does give us is the recognised text, which is all an assistant's intent stage needs. Alexa keeps the wake word,
+the speech recognition and the voice; Home Assistant runs the assistant you pick, with the same tools, the same
+settings and the same traces in its debug view as a voice satellite.
 
 Home Assistant serves the skill itself, at `/api/alexa_assist/alexa`. There is **no AWS account, no Lambda, no
 code hosted at Amazon, no account linking and no long-lived token**: the endpoint is open, and every request is
 checked against Amazon's signature (full certificate chain validation, 150 s timestamp tolerance) and against
 your skill ID.
 
-- **Any agent**: pick the conversation agent that answers in the integration settings.
+- **Any assistant**: pick the assistant that answers in the integration settings. Its conversation agent,
+  language and **Prefer handling commands locally** all apply, so "turn on the kitchen light" is handled at once
+  by Home Assistant and only the rest goes to the LLM.
+- **Knows the room**: once an Echo is mapped to its Home Assistant device (see
+  [Announcing late answers](#announcing-late-answers)), "turn off the light" means the light in that Echo's area.
 - **Late answers are not lost**: Alexa allows about 8 seconds per answer. Past the deadline the skill says the
-  answer is coming and **announces it on the Echo that asked** once the agent is done.
+  answer is coming and **announces it on the Echo that asked** once the assistant is done.
 - **Follow-ups work**: the conversation is kept per Echo, so "and tomorrow?" knows what it refers to.
 
 ## What you lose
 
-Alexa does the speech, so the Assist pipeline's own stages do not run: no Home Assistant STT/TTS, no wake-word
-engine, no satellite features (on-device timers, media announcements).
+Alexa does the speech, so only the assistant's intent stage runs: its speech-to-text, text-to-speech and
+wake-word settings are ignored, and there are no satellite features (on-device timers, media announcements).
 
 ## Before you start
 
@@ -58,8 +62,8 @@ those paths reachable too, or protect them separately (for example with Cloudfla
 
 The endpoint has no Home Assistant authentication, because Alexa cannot send a token. Instead every request must
 carry a valid Amazon signature, be for your skill ID and be less than 150 seconds old; anything else is refused
-before it reaches the agent. It only accepts text for the one conversation agent you picked, with the same
-permissions as a voice satellite: limit what that agent can do through what you expose to Assist, because anyone
+before it reaches the assistant. It only accepts text for the one assistant you picked, with the same
+permissions as a voice satellite: limit what that assistant can do through what you expose to Assist, because anyone
 who can talk to your Echo can ask it.
 
 ## 1. Install the integration
@@ -96,7 +100,9 @@ slightly towards names; if that hurts, switch the slot to `AMAZON.SearchQuery` a
 ## 3. Finish the setup in Home Assistant
 
 - **Skill ID**: the one you just copied. Requests for any other skill are refused.
-- **Conversation agent**: the agent that answers. Defaults to Home Assistant's built-in one.
+- **Assistant**: the assistant that answers, from Settings → Voice assistants. Defaults to the preferred one.
+  Its language is the one the agent hears, so pick (or create) an assistant in the language of your Echo
+  devices. Turn on **Prefer handling commands locally** in it when its agent is an LLM.
 - **Ready sound**: the earcon played when the skill opens, see below.
 - **Answer deadline**: 6.5 s is a good default, see below.
 - **Remember between invocations**: on, see below.
@@ -134,7 +140,7 @@ ask smapi simulate-skill --skill-id <id> --stage development --device-locale en-
 
 "Alexa, open …" plays the ready sound and waits for one question. Every other response (an answer, the help
 text, "sorry, can you repeat that?") ends the session; asking again means invoking the skill again.
-"Alexa, ask Home Helper …" is the phrasing that hands the agent the cleanest text.
+"Alexa, ask Home Helper …" is the phrasing that hands the assistant the cleanest text.
 
 ### The ready sound
 
@@ -171,11 +177,12 @@ Alexa gives a skill about 8 seconds to return a full response, and progressive r
 budget, so a slow answer cannot be waited out. Alexa Assist therefore:
 
 - answers within the deadline whenever it can;
-- stays silent while the agent thinks rather than speaking a filler, which would buy no extra time;
+- stays silent while the assistant thinks rather than speaking a filler, which would buy no extra time;
 - past the deadline, says the answer is coming and **announces it on the Echo that asked** once it is ready.
 
 LLM agents with web search or several tool calls are the ones that go that route. Pick a fast model and low
-reasoning effort for the agent that answers Alexa. The first question after a restart is the slowest: the
+reasoning effort for the agent of the assistant that answers Alexa, and let **Prefer handling commands locally**
+take house commands off the LLM entirely. The first question after a restart is the slowest: the
 signing certificate has to be fetched from Amazon once (then it is cached).
 
 ## Announcing late answers
@@ -198,6 +205,8 @@ two are tied together by hand, once per Echo:
    label).
 
 From then on late answers are announced on the right Echo: `announce` is preferred, `speak` is the fallback.
+The same label tells the assistant which device is asking, so commands without a room ("turn off the light") act
+on the Echo's area.
 Putting the label on a **notify entity** instead of a device sends late answers there, for example to your
 phone.
 
@@ -210,16 +219,28 @@ phone.
 | `403` with "Rejected a request for skill …" | The skill ID in the settings does not match the skill. |
 | `404` | The integration is not set up or not loaded. |
 | Nothing in the Home Assistant log at all | The request never arrived: check the external URL, port 443 and any proxy in front. Cloudflare's bot protection may need a rule that skips `/api/alexa_assist/alexa`. |
+| The Echo says "Something went wrong" | The assistant failed. The log line starting "The assistant failed" says why; the assistant's debug view (Settings → Voice assistants → the assistant → ⋮ → Debug) shows the whole run. |
+| "The assistant Alexa answers with is gone" in the log | The assistant was deleted. Pick another one under **Configure**. |
 | "certificate chain is not trusted" | Amazon rotated its signing certificate and the CA bundle is older. Update Home Assistant. |
+
+## Upgrading from 0.1
+
+0.1 called a conversation agent directly. 0.2 answers through an assistant, so the assistant's settings apply.
+The update picks the assistant that already uses your agent (the preferred one first). If none does, Alexa keeps
+calling that agent as before and the log says so: create an assistant with that agent, or pick one under
+**Configure**. The assistant's language is now the one the agent hears, rather than the Echo's.
 
 ## Development
 
 ```powershell
 uv venv --python 3.14 .venv
 uv pip install --python .venv/Scripts/python.exe pytest-homeassistant-custom-component==0.13.371 `
-  hassil==3.12.1 home-assistant-intents==2026.10.6 gazetteer-matcher==1.1.0
+  hassil==3.12.1 home-assistant-intents==2026.10.6 gazetteer-matcher==1.1.0 mutagen==1.48.1 ha-ffmpeg==3.2.2
 .venv/Scripts/python.exe -m pytest
 ```
+
+CI also installs `pymicro-vad` and `pyspeex-noise`, which `assist_pipeline` imports. They have no Windows wheels,
+so on Windows `tests/conftest.py` stands in for them; text runs never use them.
 
 On Windows, Home Assistant's test tooling also needs small `fcntl.py` and `resource.py` stub modules in
 `.venv/Lib/site-packages` (Linux and CI don't).
