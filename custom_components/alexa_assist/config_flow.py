@@ -26,6 +26,8 @@ from .const import (
     CONF_ANNOUNCE_LATE,
     CONF_ASSISTANT,
     CONF_DEADLINE,
+    CONF_LATE_MESSAGE,
+    CONF_LATE_NOTICE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_SKILL_ID,
@@ -37,6 +39,7 @@ from .const import (
     LAUNCH_SOUNDS,
     RECOMMENDED_ANNOUNCE_LATE,
     RECOMMENDED_DEADLINE,
+    RECOMMENDED_LATE_NOTICE,
     RECOMMENDED_LAUNCH_SOUND,
     RECOMMENDED_REMEMBER,
     RECOMMENDED_VERIFY_SIGNATURE,
@@ -49,6 +52,7 @@ DEFAULTS: dict[str, Any] = {
     CONF_DEADLINE: RECOMMENDED_DEADLINE,
     CONF_REMEMBER: RECOMMENDED_REMEMBER,
     CONF_ANNOUNCE_LATE: RECOMMENDED_ANNOUNCE_LATE,
+    CONF_LATE_NOTICE: RECOMMENDED_LATE_NOTICE,
     CONF_VERIFY_SIGNATURE: RECOMMENDED_VERIFY_SIGNATURE,
 }
 
@@ -74,6 +78,10 @@ SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_REMEMBER): bool,
         vol.Required(CONF_ANNOUNCE_LATE): bool,
+        vol.Required(CONF_LATE_NOTICE): bool,
+        vol.Optional(CONF_LATE_MESSAGE): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.TEXT, multiline=True)
+        ),
         vol.Required(CONF_VERIFY_SIGNATURE): bool,
     }
 )
@@ -84,6 +92,8 @@ def _validate(user_input: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str
     data = dict(user_input)
     data[CONF_SKILL_ID] = (data.get(CONF_SKILL_ID) or "").strip()
     data[CONF_LAUNCH_SOUND] = (data.get(CONF_LAUNCH_SOUND) or "").strip()
+    # Blank means the built-in phrase, in the language of the Echo that asked.
+    data[CONF_LATE_MESSAGE] = (data.get(CONF_LATE_MESSAGE) or "").strip()
     errors: dict[str, str] = {}
     if not data[CONF_SKILL_ID]:
         # The endpoint is open to the internet, so without the skill id the

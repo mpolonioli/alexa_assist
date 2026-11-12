@@ -8,8 +8,9 @@ recognition and the voice; Home Assistant keeps the house.
 The catch is time. Alexa allows a skill about 8 seconds to return a full
 response, so a slow turn cannot simply be waited out. Answers that arrive in
 time are spoken as the response; the rest are announced on the Echo that asked,
-once they are ready. Nothing is spoken in between: the wait stays silent rather
-than filled, so the first thing the Echo says is the answer.
+once they are ready. Nothing is spoken while the assistant thinks: the wait stays
+silent rather than filled. A late answer is preceded by a note that it is coming,
+unless the user turned that note off too.
 """
 
 from __future__ import annotations
@@ -47,6 +48,8 @@ from .const import (
     CONF_ANNOUNCE_LATE,
     CONF_ASSISTANT,
     CONF_DEADLINE,
+    CONF_LATE_MESSAGE,
+    CONF_LATE_NOTICE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_SKILL_ID,
@@ -59,6 +62,7 @@ from .const import (
     QUERY_SLOT,
     RECOMMENDED_ANNOUNCE_LATE,
     RECOMMENDED_DEADLINE,
+    RECOMMENDED_LATE_NOTICE,
     RECOMMENDED_LAUNCH_SOUND,
     RECOMMENDED_REMEMBER,
     RECOMMENDED_VERIFY_SIGNATURE,
@@ -253,8 +257,8 @@ async def _async_answer(
     message: dict[str, Any],
     query: str,
     locale: str | None,
-) -> str:
-    """Run the assistant and return what Alexa should say.
+) -> str | None:
+    """Run the assistant and return what Alexa should say, if anything.
 
     The turn is never cancelled: an answer that misses the deadline is still
     worth having, it just has to arrive on the Echo instead of in the response.
@@ -369,10 +373,12 @@ def _async_hand_over(
     message: dict[str, Any],
     task: asyncio.Task[str],
     locale: str | None,
-) -> str:
+) -> str | None:
     """Arrange for a late answer to be spoken, and say so.
 
-    Returns the phrase to use for the response that is about to be sent.
+    Returns the phrase to use for the response that is about to be sent: the
+    user's own message or the built-in one, or None to say nothing until the
+    announcement arrives.
     """
     target: str | None = None
     if options.get(CONF_ANNOUNCE_LATE, RECOMMENDED_ANNOUNCE_LATE):
@@ -407,7 +413,13 @@ def _async_hand_over(
         )
 
     task.add_done_callback(_finished)
-    return _phrase(locale, "late" if target else "late_dropped")
+    if target is None:
+        # Nothing will follow, so the user has to hear that: never silent.
+        return _phrase(locale, "late_dropped")
+    if not options.get(CONF_LATE_NOTICE, RECOMMENDED_LATE_NOTICE):
+        # Silent: the announcement is the first thing the Echo says.
+        return None
+    return options.get(CONF_LATE_MESSAGE) or _phrase(locale, "late")
 
 
 @callback

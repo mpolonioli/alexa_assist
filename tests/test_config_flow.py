@@ -8,6 +8,8 @@ from custom_components.alexa_assist.const import (
     CONF_ANNOUNCE_LATE,
     CONF_ASSISTANT,
     CONF_DEADLINE,
+    CONF_LATE_MESSAGE,
+    CONF_LATE_NOTICE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_SKILL_ID,
@@ -34,6 +36,7 @@ FORM: dict[str, Any] = {
     CONF_DEADLINE: 6.5,
     CONF_REMEMBER: True,
     CONF_ANNOUNCE_LATE: True,
+    CONF_LATE_NOTICE: True,
     CONF_VERIFY_SIGNATURE: True,
 }
 
@@ -110,3 +113,22 @@ async def test_options_flow_changes_the_settings(
     assert init_integration.options[CONF_LAUNCH_SOUND] == ""
     assert init_integration.options[CONF_REMEMBER] is False
     assert init_integration.options[CONF_ASSISTANT] == ASSISTANT_ID
+
+
+async def test_the_late_message_is_optional_and_trimmed(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """Left out it stays blank (built-in phrase); typed in it is stored trimmed."""
+    result = await hass.config_entries.options.async_init(init_integration.entry_id)
+    assert _suggested(result, CONF_LATE_NOTICE) is True
+
+    result = await hass.config_entries.options.async_configure(result["flow_id"], FORM)
+    assert init_integration.options[CONF_LATE_MESSAGE] == ""
+
+    result = await hass.config_entries.options.async_init(init_integration.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {**FORM, CONF_LATE_NOTICE: False, CONF_LATE_MESSAGE: "  Un attimo. "}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert init_integration.options[CONF_LATE_MESSAGE] == "Un attimo."
+    assert init_integration.options[CONF_LATE_NOTICE] is False

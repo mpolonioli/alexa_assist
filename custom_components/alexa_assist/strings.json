@@ -11,6 +11,8 @@
           "deadline": "Answer deadline",
           "remember": "Remember between invocations",
           "announce_late": "Announce late answers on the Echo",
+          "late_notice": "Say that a late answer is coming",
+          "late_message": "Late answer message",
           "verify_signature": "Verify Amazon's signature"
         },
         "data_description": {
@@ -20,6 +22,8 @@
           "deadline": "How long to wait before answering that the reply will follow. Keep it below 8 seconds, the limit Alexa gives a skill.",
           "remember": "Keeps one conversation per Echo, so asking again within five minutes can refer back to the last answer (\"and tomorrow?\"). Home Assistant forgets the thread after five idle minutes. Switch this off to start every invocation empty.",
           "announce_late": "Speaks an answer that missed the deadline on the Echo that asked. Needs the Amazon Devices integration, and the Echo has to carry the Alexa device id as a label.",
+          "late_notice": "When an answer misses the deadline and will be announced, the Echo says so before going quiet. Switch this off to hear nothing until the announcement arrives. When there is nowhere to announce the answer, the Echo always says it did not make it in time.",
+          "late_message": "What the Echo says while a late answer is on its way. Leave it empty for the built-in phrase in the Echo's language. SSML works too, wrapped in <speak>…</speak>.",
           "verify_signature": "Checks that requests really come from Amazon. Only turn this off to debug, the endpoint has no other protection."
         }
       }
@@ -44,6 +48,8 @@
           "deadline": "Answer deadline",
           "remember": "Remember between invocations",
           "announce_late": "Announce late answers on the Echo",
+          "late_notice": "Say that a late answer is coming",
+          "late_message": "Late answer message",
           "verify_signature": "Verify Amazon's signature"
         },
         "data_description": {
@@ -53,6 +59,8 @@
           "deadline": "How long to wait before answering that the reply will follow. Keep it below 8 seconds, the limit Alexa gives a skill.",
           "remember": "Keeps one conversation per Echo, so asking again within five minutes can refer back to the last answer (\"and tomorrow?\"). Home Assistant forgets the thread after five idle minutes. Switch this off to start every invocation empty.",
           "announce_late": "Speaks an answer that missed the deadline on the Echo that asked. Needs the Amazon Devices integration, and the Echo has to carry the Alexa device id as a label.",
+          "late_notice": "When an answer misses the deadline and will be announced, the Echo says so before going quiet. Switch this off to hear nothing until the announcement arrives. When there is nowhere to announce the answer, the Echo always says it did not make it in time.",
+          "late_message": "What the Echo says while a late answer is on its way. Leave it empty for the built-in phrase in the Echo's language. SSML works too, wrapped in <speak>…</speak>.",
           "verify_signature": "Checks that requests really come from Amazon. Only turn this off to debug, the endpoint has no other protection."
         }
       }
