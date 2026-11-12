@@ -11,6 +11,8 @@
           "deadline": "Tempo massimo di risposta",
           "remember": "Ricorda tra un'invocazione e l'altra",
           "announce_late": "Annuncia sull'Echo le risposte in ritardo",
+          "late_notice": "Avvisa che la risposta arriverà in ritardo",
+          "late_message": "Messaggio per le risposte in ritardo",
           "verify_signature": "Verifica la firma di Amazon"
         },
         "data_description": {
@@ -20,6 +22,8 @@
           "deadline": "Quanto attendere prima di rispondere che la risposta arriverà dopo. Tienilo sotto gli 8 secondi, il limite che Alexa concede a una skill.",
           "remember": "Tiene una conversazione per ogni Echo, così una domanda fatta entro cinque minuti può riferirsi alla risposta precedente (\"e domani?\"). Home Assistant dimentica il filo dopo cinque minuti di inattività. Disattivala per ricominciare da zero a ogni invocazione.",
           "announce_late": "Fa dire dall'Echo che ha chiesto una risposta arrivata troppo tardi. Richiede l'integrazione Amazon Devices e che l'Echo abbia come etichetta l'id del dispositivo Alexa.",
+          "late_notice": "Quando una risposta supera la scadenza e verrà annunciata, l'Echo lo dice prima di tacere. Disattivalo per non sentire nulla fino all'annuncio. Se non c'è dove annunciare la risposta, l'Echo dice comunque che non ha fatto in tempo.",
+          "late_message": "Cosa dice l'Echo mentre una risposta in ritardo è in arrivo. Lascialo vuoto per la frase predefinita nella lingua dell'Echo. Funziona anche l'SSML, racchiuso in <speak>…</speak>.",
           "verify_signature": "Controlla che le richieste arrivino davvero da Amazon. Disattivala solo per fare debug, l'endpoint non ha altre protezioni."
         }
       }
@@ -44,6 +48,8 @@
           "deadline": "Tempo massimo di risposta",
           "remember": "Ricorda tra un'invocazione e l'altra",
           "announce_late": "Annuncia sull'Echo le risposte in ritardo",
+          "late_notice": "Avvisa che la risposta arriverà in ritardo",
+          "late_message": "Messaggio per le risposte in ritardo",
           "verify_signature": "Verifica la firma di Amazon"
         },
         "data_description": {
@@ -53,6 +59,8 @@
           "deadline": "Quanto attendere prima di rispondere che la risposta arriverà dopo. Tienilo sotto gli 8 secondi, il limite che Alexa concede a una skill.",
           "remember": "Tiene una conversazione per ogni Echo, così una domanda fatta entro cinque minuti può riferirsi alla risposta precedente (\"e domani?\"). Home Assistant dimentica il filo dopo cinque minuti di inattività. Disattivala per ricominciare da zero a ogni invocazione.",
           "announce_late": "Fa dire dall'Echo che ha chiesto una risposta arrivata troppo tardi. Richiede l'integrazione Amazon Devices e che l'Echo abbia come etichetta l'id del dispositivo Alexa.",
+          "late_notice": "Quando una risposta supera la scadenza e verrà annunciata, l'Echo lo dice prima di tacere. Disattivalo per non sentire nulla fino all'annuncio. Se non c'è dove annunciare la risposta, l'Echo dice comunque che non ha fatto in tempo.",
+          "late_message": "Cosa dice l'Echo mentre una risposta in ritardo è in arrivo. Lascialo vuoto per la frase predefinita nella lingua dell'Echo. Funziona anche l'SSML, racchiuso in <speak>…</speak>.",
           "verify_signature": "Controlla che le richieste arrivino davvero da Amazon. Disattivala solo per fare debug, l'endpoint non ha altre protezioni."
         }
       }

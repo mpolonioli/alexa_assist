@@ -23,6 +23,8 @@ from custom_components.alexa_assist.alexa_auth import (
     verify_timestamp,
 )
 from custom_components.alexa_assist.const import (
+    CONF_LATE_MESSAGE,
+    CONF_LATE_NOTICE,
     CONF_LAUNCH_SOUND,
     CONF_REMEMBER,
     CONF_VERIFY_SIGNATURE,
@@ -523,6 +525,92 @@ async def test_a_late_answer_is_announced_on_the_echo_that_asked(
         await hass.async_block_till_done()
 
     assert calls == [{"entity_id": "notify.kitchen_announce", "message": "Domani sereno."}]
+
+
+async def _late_response(
+    hass: HomeAssistant,
+    entry: MockConfigEntry,
+    client_factory: Any,
+    **options: Any,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Ask a mapped Echo a slow question with these options and return what happened."""
+    hass.config_entries.async_update_entry(entry, options={**entry.options, **options})
+    _map_echo(hass)
+
+    calls: list[dict[str, Any]] = []
+
+    async def _record(call: Any) -> None:
+        calls.append(dict(call.data))
+
+    hass.services.async_register("notify", "send_message", _record)
+
+    client = await client_factory()
+    with patch(
+        "homeassistant.components.conversation.async_converse",
+        new=_answer("Domani sereno.", delay=0.6),
+    ):
+        response = await client.post(ENDPOINT, json=_query("che tempo fa domani"))
+        payload = await response.json()
+        await hass.async_block_till_done()
+    return payload, calls
+
+
+async def test_the_late_message_can_be_personalised(
+    hass: HomeAssistant, alexa_entry: MockConfigEntry, hass_client_no_auth: Any
+) -> None:
+    """A message of the user's own replaces the built-in phrase."""
+    payload, calls = await _late_response(
+        hass, alexa_entry, hass_client_no_auth, **{CONF_LATE_MESSAGE: "Un attimo."}
+    )
+    assert payload["response"]["outputSpeech"] == {"type": "PlainText", "text": "Un attimo."}
+    assert payload["response"]["shouldEndSession"] is True
+    assert calls == [{"entity_id": "notify.kitchen_announce", "message": "Domani sereno."}]
+
+
+async def test_the_late_message_can_be_ssml(
+    hass: HomeAssistant, alexa_entry: MockConfigEntry, hass_client_no_auth: Any
+) -> None:
+    """Markup in the message goes to Alexa as SSML."""
+    ssml = '<speak>Un attimo.<break time="300ms"/></speak>'
+    payload, _ = await _late_response(
+        hass, alexa_entry, hass_client_no_auth, **{CONF_LATE_MESSAGE: ssml}
+    )
+    assert payload["response"]["outputSpeech"] == {"type": "SSML", "ssml": ssml}
+
+
+async def test_the_late_notice_can_be_silenced(
+    hass: HomeAssistant, alexa_entry: MockConfigEntry, hass_client_no_auth: Any
+) -> None:
+    """Switched off, the Echo says nothing until the announcement."""
+    payload, calls = await _late_response(
+        hass,
+        alexa_entry,
+        hass_client_no_auth,
+        **{CONF_LATE_NOTICE: False, CONF_LATE_MESSAGE: "Un attimo."},
+    )
+    assert "outputSpeech" not in payload["response"]
+    assert payload["response"]["shouldEndSession"] is True
+    assert calls == [{"entity_id": "notify.kitchen_announce", "message": "Domani sereno."}]
+
+
+async def test_a_dropped_answer_is_never_silent(
+    hass: HomeAssistant, alexa_entry: MockConfigEntry, hass_client_no_auth: Any
+) -> None:
+    """With nowhere to announce it, the user still hears the answer is lost."""
+    hass.config_entries.async_update_entry(
+        alexa_entry,
+        options={**alexa_entry.options, CONF_LATE_NOTICE: False, CONF_LATE_MESSAGE: "Un attimo."},
+    )
+    client = await hass_client_no_auth()
+    with patch(
+        "homeassistant.components.conversation.async_converse",
+        new=_answer("Troppo tardi.", delay=0.6),
+    ):
+        response = await client.post(ENDPOINT, json=_query("che tempo fa domani"))
+        payload = await response.json()
+        await hass.async_block_till_done()
+
+    assert payload["response"]["outputSpeech"]["text"] == IT["late_dropped"]
 
 
 async def test_a_late_answer_without_a_mapped_echo_says_so(

@@ -17,6 +17,8 @@ CONF_AGENT = "agent"
 CONF_VERIFY_SIGNATURE = "verify_signature"
 CONF_DEADLINE = "deadline"
 CONF_ANNOUNCE_LATE = "announce_late"
+CONF_LATE_NOTICE = "late_notice"
+CONF_LATE_MESSAGE = "late_message"
 CONF_LAUNCH_SOUND = "launch_sound"
 CONF_REMEMBER = "remember"
 
@@ -34,6 +36,10 @@ RECOMMENDED_DEADLINE = 6.5
 DEADLINE_RANGE = (1.0, 7.5)
 RECOMMENDED_VERIFY_SIGNATURE = True
 RECOMMENDED_ANNOUNCE_LATE = True
+# While a late answer is on its way the Echo says so (PHRASES "late", or the
+# user's own message). Switched off, the response is silent and the first thing
+# the Echo says is the announcement itself.
+RECOMMENDED_LATE_NOTICE = True
 # Key the conversation on the Echo rather than on the Alexa session, so asking
 # again within Home Assistant's five minute window continues the same thread
 # and "and tomorrow?" knows what it refers to.

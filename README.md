@@ -107,6 +107,8 @@ slightly towards names; if that hurts, switch the slot to `AMAZON.SearchQuery` a
 - **Answer deadline**: 6.5 s is a good default, see below.
 - **Remember between invocations**: on, see below.
 - **Announce late answers on the Echo**: on, see below.
+- **Say that a late answer is coming** and **Late answer message**: what the Echo says past the deadline, see
+  below.
 - **Verify Amazon's signature**: on. Turn it off only while debugging: it is the only thing standing between an
   open endpoint and your house.
 
@@ -179,6 +181,11 @@ budget, so a slow answer cannot be waited out. Alexa Assist therefore:
 - answers within the deadline whenever it can;
 - stays silent while the assistant thinks rather than speaking a filler, which would buy no extra time;
 - past the deadline, says the answer is coming and **announces it on the Echo that asked** once it is ready.
+
+The "answer is coming" phrase can be changed with **Late answer message** (plain text, or SSML wrapped in
+`<speak>…</speak>`; leave it empty for the built-in phrase in the Echo's language). Switch off **Say that a late
+answer is coming** to keep the Echo silent until the announcement itself. That only applies when the answer has
+somewhere to go: if the Echo is not mapped (see below), it always says it did not make it in time.
 
 LLM agents with web search or several tool calls are the ones that go that route. Pick a fast model and low
 reasoning effort for the agent of the assistant that answers Alexa, and let **Prefer handling commands locally**
