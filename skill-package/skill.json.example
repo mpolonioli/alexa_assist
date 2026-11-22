@@ -31,12 +31,28 @@
             "assistant",
             "casa"
           ]
+        },
+        "de-DE": {
+          "name": "Haushelfer",
+          "summary": "Sprich mit deinem Home Assistant Konversationsagenten.",
+          "description": "Leitet das, was du sagst, an einen Konversationsagenten von Home Assistant weiter und liest die Antwort vor.",
+          "examplePhrases": [
+            "Alexa, öffne Haushelfer",
+            "Alexa, frag Haushelfer, wie das Wetter ist",
+            "Alexa, sag Haushelfer, schalte das Licht in der Küche ein"
+          ],
+          "keywords": [
+            "haus",
+            "assistent",
+            "alexa"
+          ]
         }
       },
       "isAvailableWorldwide": false,
       "distributionCountries": [
         "US",
-        "IT"
+        "IT",
+        "DE"
       ],
       "category": "SMART_HOME",
       "testingInstructions": "Private skill, never submitted for certification."
@@ -57,7 +73,8 @@
       "isChildDirected": false,
       "locales": {
         "en-US": {},
-        "it-IT": {}
+        "it-IT": {},
+        "de-DE": {}
       }
     }
   }

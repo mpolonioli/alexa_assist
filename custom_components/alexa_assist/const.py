@@ -91,4 +91,15 @@ PHRASES = {
         "help": "Tell me a command for the house or ask me a question.",
         "not_understood": "Sorry, can you repeat that?",
     },
+    "de": {
+        "launch": "Hallo, sag nur.",
+        "reprompt": "Sag nur.",
+        "late": "Ich denke noch nach, ich melde mich gleich bei dir.",
+        "late_dropped": "Ich habe es nicht rechtzeitig geschafft, frag mich einfach noch einmal.",
+        "error": "Da ist etwas schiefgelaufen.",
+        "empty": "Ich habe keine Antwort.",
+        "goodbye": "Tschüss.",
+        "help": "Sag mir einen Befehl fürs Haus oder stell mir eine Frage.",
+        "not_understood": "Tut mir leid, kannst du das wiederholen?",
+    },
 }

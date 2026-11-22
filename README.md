@@ -79,9 +79,10 @@ who can talk to your Echo can ask it.
 1. Go to <https://developer.amazon.com/alexa/console/ask> and **Create Skill**.
 2. Name it, pick the language of your Echo devices, then **Custom** model and **Provision your own** hosting.
 3. Open **Interaction Model → JSON Editor**, paste
-   [`skill-package/interactionModels/custom/en-US.json`](skill-package/interactionModels/custom/en-US.json)
-   (or [`it-IT.json`](skill-package/interactionModels/custom/it-IT.json)), change `invocationName` if you like,
-   **Save**, then **Build**. For another language, copy one of the two files: only the invocation name changes,
+   [`skill-package/interactionModels/custom/en-US.json`](skill-package/interactionModels/custom/en-US.json),
+   [`it-IT.json`](skill-package/interactionModels/custom/it-IT.json) or
+   [`de-DE.json`](skill-package/interactionModels/custom/de-DE.json), change `invocationName` if you like,
+   **Save**, then **Build**. For another language, copy one of the files: only the invocation name changes,
    and add the language's phrases to `PHRASES` in `const.py`.
 4. Under **Endpoint**, choose **HTTPS** and enter `https://your-external-url/api/alexa_assist/alexa`. For the
    certificate pick *"My development endpoint is a sub-domain of a domain that has a wildcard certificate from a

@@ -1,0 +1,73 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Alexa Assist",
+        "description": "Lässt Echo-Geräte mit einem Home Assistant Assistenten sprechen, über eine eigene Alexa-Skill: Alexa kümmert sich um das Wakeword und die Stimme, Home Assistant antwortet. Richte den HTTPS-Endpunkt der Skill auf {endpoint} deiner externen URL ein. Alexa erlaubt etwa 8 Sekunden pro Antwort: langsamere werden auf dem Echo, der gefragt hat, angesagt.",
+        "data": {
+          "skill_id": "Skill ID",
+          "assistant": "Assistent",
+          "launch_sound": "Bereitschaftston",
+          "deadline": "Antwort-Frist",
+          "remember": "Zwischen den Aufrufen merken",
+          "announce_late": "Späte Antworten auf dem Echo ansagen",
+          "late_notice": "Sagen, dass eine Antwort kommt",
+          "late_message": "Nachricht für späte Antworten",
+          "verify_signature": "Signatur von Amazon prüfen"
+        },
+        "data_description": {
+          "skill_id": "Aus der Alexa-Entwicklerkonsole, etwa amzn1.ask.skill.0000. Anfragen für jede andere Skill werden abgelehnt.",
+          "assistant": "Der Assistent, der Alexa antwortet, aus Einstellungen > Sprachassistenten. Sein Konversationsagent, seine Sprache und \"Befehle lokal verarbeiten\" gelten alle, und jede Frage erscheint in seiner Debug-Ansicht. Alexa übernimmt die Sprache, daher werden seine Sprach-zu-Text- und Text-zu-Sprache-Einstellungen nicht genutzt.",
+          "launch_sound": "Wird statt einer gesprochenen Begrüßung gespielt, wenn du die Skill öffnest, sodass du früher sprechen kannst. Wähle eine URI aus Amazons Soundbibliothek, füge einen anderen soundbank://- oder https://-MP3 ein, oder leere das Feld, um eine gesprochene Begrüßung zu hören.",
+          "deadline": "Wie lange gewartet wird, bevor gesagt wird, dass die Antwort folgt. Halte es unter 8 Sekunden, dem Limit, das Alexa einer Skill gibt.",
+          "remember": "Hält ein Gespräch pro Echo, sodass eine erneute Frage innerhalb von fünf Minuten sich auf die letzte Antwort beziehen kann (\"und morgen?\"). Home Assistant vergisst den Thread nach fünf Minuten Inaktivität. Schalte dies aus, um jeden Aufruf leer zu beginnen.",
+          "announce_late": "Spricht eine Antwort, die die Frist verpasst hat, auf dem Echo, der gefragt hat. Benötigt die Amazon-Devices-Integration, und der Echo muss die Alexa-Geräte-ID als Etikett tragen.",
+          "late_notice": "Wenn eine Antwort die Frist verpasst und angesagt wird, sagt der Echo es, bevor er schweigt. Schalte dies aus, um nichts zu hören, bis die Ankunft eintrifft. Wenn es keinen Ort gibt, um die Antwort anzusagen, sagt der Echo immer, dass er es nicht rechtzeitig geschafft hat.",
+          "late_message": "Was der Echo sagt, während eine späte Antwort unterwegs ist. Lasse es leer für die eingebaute Phrase in der Sprache des Echos. SSML funktioniert auch, als ganzes speak-Element.",
+          "verify_signature": "Prüft, dass Anfragen wirklich von Amazon kommen. Schalte dies nur zum Debuggen aus, der Endpunkt hat keinen anderen Schutz."
+        }
+      }
+    },
+    "error": {
+      "skill_id_required": "Die Skill ID ist erforderlich: Anfragen für jede andere Skill werden abgelehnt.",
+      "sound_invalid": "Der Ton muss eine soundbank://-URI aus Amazons Soundbibliothek oder ein https://-MP3 sein."
+    },
+    "abort": {
+      "single_instance_allowed": "Alexa Assist ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Alexa Assist",
+        "description": "Der HTTPS-Endpunkt der Skill ist {endpoint} auf deiner externen URL. Änderungen gelten sofort.",
+        "data": {
+          "skill_id": "Skill ID",
+          "assistant": "Assistent",
+          "launch_sound": "Bereitschaftston",
+          "deadline": "Antwort-Frist",
+          "remember": "Zwischen den Aufrufen merken",
+          "announce_late": "Späte Antworten auf dem Echo ansagen",
+          "late_notice": "Sagen, dass eine Antwort kommt",
+          "late_message": "Nachricht für späte Antworten",
+          "verify_signature": "Signatur von Amazon prüfen"
+        },
+        "data_description": {
+          "skill_id": "Aus der Alexa-Entwicklerkonsole, etwa amzn1.ask.skill.0000. Anfragen für jede andere Skill werden abgelehnt.",
+          "assistant": "Der Assistent, der Alexa antwortet, aus Einstellungen > Sprachassistenten. Sein Konversationsagent, seine Sprache und \"Befehle lokal verarbeiten\" gelten alle, und jede Frage erscheint in seiner Debug-Ansicht. Alexa übernimmt die Sprache, daher werden seine Sprach-zu-Text- und Text-zu-Sprache-Einstellungen nicht genutzt.",
+          "launch_sound": "Wird statt einer gesprochenen Begrüßung gespielt, wenn du die Skill öffnest, sodass du früher sprechen kannst. Wähle eine URI aus Amazons Soundbibliothek, füge einen anderen soundbank://- oder https://-MP3 ein, oder leere das Feld, um eine gesprochene Begrüßung zu hören.",
+          "deadline": "Wie lange gewartet wird, bevor gesagt wird, dass die Antwort folgt. Halte es unter 8 Sekunden, dem Limit, das Alexa einer Skill gibt.",
+          "remember": "Hält ein Gespräch pro Echo, sodass eine erneute Frage innerhalb von fünf Minuten sich auf die letzte Antwort beziehen kann (\"und morgen?\"). Home Assistant vergisst den Thread nach fünf Minuten Inaktivität. Schalte dies aus, um jeden Aufruf leer zu beginnen.",
+          "announce_late": "Spricht eine Antwort, die die Frist verpasst hat, auf dem Echo, der gefragt hat. Benötigt die Amazon-Devices-Integration, und der Echo muss die Alexa-Geräte-ID als Etikett tragen.",
+          "late_notice": "Wenn eine Antwort die Frist verpasst und angesagt wird, sagt der Echo es, bevor er schweigt. Schalte dies aus, um nichts zu hören, bis die Ankunft eintrifft. Wenn es keinen Ort gibt, um die Antwort anzusagen, sagt der Echo immer, dass er es nicht rechtzeitig geschafft hat.",
+          "late_message": "Was der Echo sagt, während eine späte Antwort unterwegs ist. Lasse es leer für die eingebaute Phrase in der Sprache des Echos. SSML funktioniert auch, als ganzes speak-Element.",
+          "verify_signature": "Prüft, dass Anfragen wirklich von Amazon kommen. Schalte dies nur zum Debuggen aus, der Endpunkt hat keinen anderen Schutz."
+        }
+      }
+    },
+    "error": {
+      "skill_id_required": "Die Skill ID ist erforderlich: Anfragen für jede andere Skill werden abgelehnt.",
+      "sound_invalid": "Der Ton muss eine soundbank://-URI aus Amazons Soundbibliothek oder ein https://-MP3 sein."
+    }
+  }
+}
